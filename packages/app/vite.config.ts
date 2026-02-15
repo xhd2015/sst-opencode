@@ -7,6 +7,12 @@ export default defineConfig({
     host: "0.0.0.0",
     allowedHosts: true,
     port: 3000,
+    proxy: {
+      "/api": {
+        target: "http://localhost:5096",
+        changeOrigin: true,
+      },
+    },
   },
   build: {
     target: "esnext",

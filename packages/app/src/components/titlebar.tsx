@@ -244,7 +244,12 @@ export function Titlebar() {
       </div>
 
       <div class="min-w-0 flex items-center justify-center pointer-events-none lg:absolute lg:inset-0 lg:flex lg:items-center lg:justify-center">
-        <div id="opencode-titlebar-center" class="pointer-events-auto w-full min-w-0 flex justify-center lg:w-fit" />
+        <div class="pointer-events-auto w-full min-w-0 flex justify-center lg:w-fit">
+          <span class="text-xs font-mono text-yellow-500 border border-yellow-500/30 bg-yellow-500/10 px-2 py-0.5 rounded">
+            Local Test
+          </span>
+          <div id="opencode-titlebar-center" />
+        </div>
       </div>
 
       <div

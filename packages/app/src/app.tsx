@@ -126,8 +126,16 @@ const resolveDefaultServerUrl = (props: {
 }) => {
   if (props.defaultUrl) return props.defaultUrl
   if (props.storedDefaultServerUrl) return props.storedDefaultServerUrl
-  if (props.hostname.includes("opencode.ai")) return "http://localhost:4096"
-  if (props.isDev) return `http://${props.devHost ?? "localhost"}:${props.devPort ?? "4096"}`
+  if (props.hostname.includes("opencode.ai")) return "http://localhost:5096"
+  if (
+    props.isDev &&
+    (props.hostname === "localhost" ||
+      props.hostname === "127.0.0.1" ||
+      props.hostname.startsWith("192.168.") ||
+      props.hostname.startsWith("10."))
+  ) {
+    return `http://${props.devHost ?? "localhost"}:${props.devPort ?? "5096"}`
+  }
   return props.origin
 }
 

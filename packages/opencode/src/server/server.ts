@@ -541,18 +541,62 @@ export namespace Server {
         .all("/*", async (c) => {
           const path = c.req.path
 
-          const response = await proxy(`https://app.opencode.ai${path}`, {
-            ...c.req,
-            headers: {
-              ...c.req.raw.headers,
-              host: "app.opencode.ai",
-            },
-          })
-          response.headers.set(
-            "Content-Security-Policy",
-            "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; media-src 'self' data:; connect-src 'self' data:",
-          )
-          return response
+          const connection = c.req.header("Connection") ?? ""
+          const upgrade = c.req.header("Upgrade") ?? ""
+          if (connection.toLowerCase().includes("upgrade") && upgrade.toLowerCase() === "websocket") {
+            return c.text("WebSocket upgrade not supported through proxy", 400)
+          }
+
+          const proxyUrl = process.env.OPENCODE_WEB_PROXY_URL ?? `http://localhost:4444`
+
+          const headersToRemove = ["content-length", "host", "connection"]
+          const newHeaders = new Headers()
+          for (const [key, value] of c.req.raw.headers) {
+            if (!headersToRemove.includes(key.toLowerCase())) {
+              newHeaders.set(key, value)
+            }
+          }
+
+          const proxyUrlObj = new URL(proxyUrl)
+          newHeaders.set("host", proxyUrlObj.host)
+          newHeaders.set("Accept-Encoding", "identity")
+
+          try {
+            const controller = new AbortController()
+            const timeout = setTimeout(() => controller.abort(), 10000)
+
+            const response = await fetch(`${proxyUrl}${path}`, {
+              method: c.req.method,
+              headers: newHeaders,
+              body: c.req.method !== "GET" && c.req.method !== "HEAD" ? await c.req.arrayBuffer() : undefined,
+              signal: controller.signal,
+            })
+            clearTimeout(timeout)
+
+            const contentEncoding = response.headers.get("content-encoding") ?? ""
+            let body = await response.arrayBuffer()
+
+            if (contentEncoding === "gzip") {
+              // Can't easily decompress in Bun without extra deps, just pass through
+            } else if (contentEncoding === "br") {
+              // Can't easily decompress in Bun without extra deps, just pass through
+            }
+
+            const outHeaders = new Headers()
+            for (const [key, value] of response.headers) {
+              if (key.toLowerCase() !== "content-encoding" && key.toLowerCase() !== "content-length") {
+                outHeaders.set(key, value)
+              }
+            }
+            outHeaders.set("content-length", String(body.byteLength))
+
+            return new Response(body, {
+              status: response.status,
+              headers: outHeaders,
+            })
+          } catch (err) {
+            return c.json({ error: "Proxy error: " + (err instanceof Error ? err.message : "Unknown") }, 502)
+          }
         }) as unknown as Hono,
   )
 
