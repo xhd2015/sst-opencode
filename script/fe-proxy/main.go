@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	target := "https://app.opencode.ai"
+	target := "http://localhost:4444"
 
 	targetURL, err := url.Parse(target)
 	if err != nil {
@@ -35,7 +35,7 @@ func main() {
 		w.Write([]byte("Proxy error: " + err.Error()))
 	}
 
-	log.Println("Starting FE proxy on http://localhost:4731 -> https://app.opencode.ai")
+	log.Println("Starting FE proxy on http://localhost:4731 -> http://localhost:4444")
 
 	http.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
 		start := time.Now()

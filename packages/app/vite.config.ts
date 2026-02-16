@@ -7,6 +7,10 @@ export default defineConfig({
     host: "0.0.0.0",
     allowedHosts: true,
     port: 3000,
+    hmr: {
+      host: "port-4444-ae2842d.xhd2015.xyz",
+      protocol: "wss",
+    },
     proxy: {
       "/api": {
         target: "http://localhost:5096",
